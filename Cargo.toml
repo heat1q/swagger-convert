@@ -1,0 +1,27 @@
+[package]
+name = "swagger-convert"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "swagger-convert"
+required-features = ["swagger-convert"]
+
+[dependencies]
+itertools = "0.13.0"
+serde = "1.0.204"
+serde_json = { version = "1.0.120", features = ["raw_value"]}
+serde_with = "3.9.0"
+thiserror = "1.0.63"
+utoipa = { git = "https://github.com/juhaku/utoipa", rev = "b941d645d9fbc59cc30da5b0b9f3402034e8571a" }
+
+clap = { version = "4.5.10", optional = true }
+anyhow = { version = "1.0.86", optional = true }
+
+[features]
+default = []
+debug = ["utoipa/debug"]
+swagger-convert = ["dep:clap", "dep:anyhow"]
+
+[dev-dependencies]
+assert-json-diff = "2.0.2"
