@@ -328,7 +328,7 @@ mod tests {
 
     #[test]
     fn deserialize_paths() {
-        let paths = include_json!("../../tests/user-service-swagger.json", "/paths").to_string();
+        let paths = include_json!("../../tests/data/swagger.json", "/paths").to_string();
         let paths: Paths = serde_json::from_str(&paths).unwrap();
 
         let s = serde_json::to_string_pretty(&paths).unwrap();
@@ -337,8 +337,8 @@ mod tests {
 
     #[test]
     fn into_openapi_paths() {
-        let paths = include_json!("../../tests/swagger.json", "/paths").to_string();
-        let openapi_paths_raw = include_json!("../../tests/openapi.json", "/paths");
+        let paths = include_json!("../../tests/data/swagger.json", "/paths").to_string();
+        let openapi_paths_raw = include_json!("../../tests/data/openapi.json", "/paths");
 
         let paths: Paths = serde_json::from_str(&paths).unwrap();
         let openapi_paths: openapi::Paths = paths.into();

@@ -224,7 +224,7 @@ mod tests {
     #[test]
     fn deserialize_definition() {
         let swagger: Value =
-            serde_json::from_str(include_str!("../../tests/swagger.json")).unwrap();
+            serde_json::from_str(include_str!("../../tests/data/swagger.json")).unwrap();
         let definitions = swagger.get("definitions").unwrap().to_string();
         let definitions: Definitions = serde_json::from_str(&definitions).unwrap();
 
@@ -234,8 +234,8 @@ mod tests {
 
     #[test]
     fn into_openapi_schemas() {
-        let definitions = include_json!("../../tests/swagger.json", "/definitions").to_string();
-        let schemas = include_json!("../../tests/openapi.json", "/components/schemas");
+        let definitions = include_json!("../../tests/data/swagger.json", "/definitions").to_string();
+        let schemas = include_json!("../../tests/data/openapi.json", "/components/schemas");
 
         let definitions: Definitions = serde_json::from_str(&definitions).unwrap();
         let openapi_schemas: BTreeMap<String, openapi::RefOr<openapi::Schema>> = definitions.into();

@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn serde_security() {
-        let security_raw = include_json!("../../tests/swagger.json", "/securityDefinitions");
+        let security_raw = include_json!("../../tests/data/swagger.json", "/securityDefinitions");
 
         let de: BTreeMap<String, SecurityScheme> =
             serde_json::from_str(&security_raw.clone().to_string()).unwrap();
@@ -106,9 +106,9 @@ mod tests {
     #[test]
     fn into_openapi_security() {
         let security_raw =
-            include_json!("../../tests/swagger.json", "/securityDefinitions").to_string();
+            include_json!("../../tests/data/swagger.json", "/securityDefinitions").to_string();
         let security_openapi_raw =
-            include_json!("../../tests/openapi.json", "/components/securitySchemes");
+            include_json!("../../tests/data/openapi.json", "/components/securitySchemes");
 
         let security: BTreeMap<String, SecurityScheme> =
             serde_json::from_str(&security_raw).unwrap();
