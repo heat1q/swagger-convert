@@ -166,7 +166,7 @@ pub struct Swagger {
     pub paths: Paths,
     pub definitions: Definitions,
     pub responses: Responses,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub security_definitions: BTreeMap<String, SecurityScheme>,
     pub security: Option<Vec<openapi::SecurityRequirement>>,
     pub tags: Option<Vec<openapi::Tag>>,
