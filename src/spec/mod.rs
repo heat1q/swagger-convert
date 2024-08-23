@@ -164,9 +164,9 @@ pub struct Swagger {
     pub consumes: Option<Vec<String>>,
     pub produces: Option<Vec<String>>,
     pub paths: Paths,
-    pub definitions: Definitions,
-    pub responses: Responses,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub definitions: Option<Definitions>,
+    pub responses: Option<Responses>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub security_definitions: BTreeMap<String, SecurityScheme>,
     pub security: Option<Vec<openapi::SecurityRequirement>>,
     pub tags: Option<Vec<openapi::Tag>>,
@@ -175,10 +175,18 @@ pub struct Swagger {
 
 impl From<Swagger> for openapi::OpenApi {
     fn from(swagger: Swagger) -> Self {
-        let responses: openapi::Responses = swagger.responses.into();
+        let responses: openapi::Responses = if swagger.responses.is_some() {
+            swagger.responses.unwrap().into()
+        } else {
+            openapi::Responses::new()
+        };
 
         let mut components = openapi::Components::new();
-        components.schemas = swagger.definitions.into();
+        components.schemas = if swagger.definitions.is_some() {
+            swagger.definitions.unwrap().into()
+        } else {
+            BTreeMap::new()
+        };
         components.responses = responses.responses;
         components.security_schemes = swagger
             .security_definitions
