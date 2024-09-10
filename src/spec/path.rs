@@ -317,28 +317,37 @@ pub struct ParameterBody {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::{fs, path::PathBuf};
 
     use assert_json_diff::assert_json_eq;
     use serde_json::json;
 
     use crate::include_json;
+    use testdir::testdir;
 
     use super::*;
 
     #[test]
     fn deserialize_paths() {
-        let paths = include_json!("../../tests/user-service-swagger.json", "/paths").to_string();
+        let paths = include_json!("../../tests/data/swagger.json", "/paths").to_string();
         let paths: Paths = serde_json::from_str(&paths).unwrap();
 
         let s = serde_json::to_string_pretty(&paths).unwrap();
-        fs::write("paths.json", s).unwrap();
+        let dir: PathBuf = testdir!();
+        fs::write(dir.join("paths.json"), s).unwrap();
+
+        // then
+        let path_raw = include_json!("../../tests/data/paths.json");
+        assert_json_eq!(
+            serde_json::to_value(path_raw).unwrap(),
+            paths
+        );
     }
 
     #[test]
     fn into_openapi_paths() {
-        let paths = include_json!("../../tests/swagger.json", "/paths").to_string();
-        let openapi_paths_raw = include_json!("../../tests/openapi.json", "/paths");
+        let paths = include_json!("../../tests/data/swagger.json", "/paths").to_string();
+        let openapi_paths_raw = include_json!("../../tests/data/openapi.json", "/paths");
 
         let paths: Paths = serde_json::from_str(&paths).unwrap();
         let openapi_paths: openapi::Paths = paths.into();

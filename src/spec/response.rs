@@ -112,16 +112,16 @@ mod tests {
 
     #[test]
     fn deserialize_responses() {
-        let responses =
-            include_json!("../../tests/user-service-swagger.json", "/responses").to_string();
+        let responses = include_json!("../../tests/data/petstore_swagger.json", "/responses").to_string();
         let _responses: Responses = serde_json::from_str(&responses).unwrap();
     }
 
     #[test]
     fn into_openapi_responses() {
-        let responses_raw = include_json!("../../tests/swagger.json", "/responses").to_string();
+        let responses_raw =
+            include_json!("../../tests/data/petstore_swagger.json", "/responses").to_string();
         let responses_openapi_raw =
-            include_json!("../../tests/openapi.json", "/components/responses");
+            include_json!("../../tests/data/petstore_openapi.json", "/components/responses");
 
         let responses: Responses = serde_json::from_str(&responses_raw).unwrap();
         let openapi_responses: openapi::Responses = responses.into();
