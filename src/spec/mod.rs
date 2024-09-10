@@ -32,12 +32,12 @@ impl Extensions {
             .unwrap_or(false)
     }
 
-    pub fn into_openapi_extensions(mut self) -> Option<HashMap<String, serde_json::Value>> {
+    pub fn into_openapi_extensions(mut self) -> Option<utoipa::openapi::extensions::Extensions> {
         if self.0.is_empty() {
             return None;
         }
         self.0.remove("x-nullable");
-        Some(self.0)
+        Some(self.into())
     }
 }
 
@@ -75,6 +75,16 @@ impl<'de> serde::de::Deserialize<'de> for Extensions {
             .filter(|(k, _)| k.starts_with("x-"))
             .collect();
         Ok(Self(map))
+    }
+}
+
+impl From<Extensions> for utoipa::openapi::extensions::Extensions {
+    fn from(value: Extensions) -> Self {
+        let mut builder = openapi::extensions::ExtensionsBuilder::new();
+        for (key, value) in value.0 {
+            builder = builder.add(key, value);
+        }
+        builder.build()
     }
 }
 

@@ -317,12 +317,13 @@ pub struct ParameterBody {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::{fs, path::PathBuf};
 
     use assert_json_diff::assert_json_eq;
     use serde_json::json;
 
     use crate::include_json;
+    use testdir::testdir;
 
     use super::*;
 
@@ -332,7 +333,15 @@ mod tests {
         let paths: Paths = serde_json::from_str(&paths).unwrap();
 
         let s = serde_json::to_string_pretty(&paths).unwrap();
-        fs::write("paths.json", s).unwrap();
+        let dir: PathBuf = testdir!();
+        fs::write(dir.join("paths.json"), s).unwrap();
+
+        // then
+        let path_raw = include_json!("../../tests/data/paths.json");
+        assert_json_eq!(
+            serde_json::to_value(path_raw).unwrap(),
+            paths
+        );
     }
 
     #[test]

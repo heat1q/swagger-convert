@@ -1,0 +1,171 @@
+{
+  "ApiResponse": {
+    "type": "object",
+    "properties": {
+      "code": {
+        "format": "int32",
+        "type": "integer"
+      },
+      "message": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      }
+    }
+  },
+  "Category": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "format": "int64",
+        "type": "integer"
+      },
+      "name": {
+        "type": "string"
+      }
+    },
+    "xml": {
+      "name": "Category"
+    }
+  },
+  "Order": {
+    "type": "object",
+    "properties": {
+      "complete": {
+        "type": "boolean"
+      },
+      "id": {
+        "format": "int64",
+        "type": "integer"
+      },
+      "petId": {
+        "format": "int64",
+        "type": "integer"
+      },
+      "quantity": {
+        "format": "int32",
+        "type": "integer"
+      },
+      "shipDate": {
+        "format": "date-time",
+        "type": "string"
+      },
+      "status": {
+        "description": "Order Status",
+        "enum": [
+          "placed",
+          "approved",
+          "delivered"
+        ],
+        "type": "string"
+      }
+    },
+    "xml": {
+      "name": "Order"
+    }
+  },
+  "Pet": {
+    "required": [
+      "name",
+      "photoUrls"
+    ],
+    "type": "object",
+    "properties": {
+      "category": {
+        "$ref": "#/definitions/Category"
+      },
+      "id": {
+        "format": "int64",
+        "type": "integer"
+      },
+      "name": {
+        "type": "string",
+        "example": "doggie"
+      },
+      "photoUrls": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "xml": {
+            "name": "photoUrl"
+          }
+        },
+        "xml": {
+          "wrapped": true
+        }
+      },
+      "status": {
+        "description": "pet status in the store",
+        "enum": [
+          "available",
+          "pending",
+          "sold"
+        ],
+        "type": "string"
+      },
+      "tags": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Tag"
+        },
+        "xml": {
+          "wrapped": true
+        }
+      }
+    },
+    "xml": {
+      "name": "Pet"
+    }
+  },
+  "Tag": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "format": "int64",
+        "type": "integer"
+      },
+      "name": {
+        "type": "string"
+      }
+    },
+    "xml": {
+      "name": "Tag"
+    }
+  },
+  "User": {
+    "type": "object",
+    "properties": {
+      "email": {
+        "type": "string"
+      },
+      "firstName": {
+        "type": "string"
+      },
+      "id": {
+        "format": "int64",
+        "type": "integer"
+      },
+      "lastName": {
+        "type": "string"
+      },
+      "password": {
+        "type": "string"
+      },
+      "phone": {
+        "type": "string"
+      },
+      "userStatus": {
+        "format": "int32",
+        "description": "User Status",
+        "type": "integer"
+      },
+      "username": {
+        "type": "string"
+      }
+    },
+    "xml": {
+      "name": "User"
+    }
+  }
+}

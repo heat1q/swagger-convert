@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use utoipa::openapi;
+use utoipa::openapi::{self};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn serde_security() {
-        let security_raw = include_json!("../../tests/data/swagger.json", "/securityDefinitions");
+        let security_raw = include_json!("../../tests/data/petstore_swagger.json", "/securityDefinitions");
 
         let de: BTreeMap<String, SecurityScheme> =
             serde_json::from_str(&security_raw.clone().to_string()).unwrap();
@@ -105,15 +105,20 @@ mod tests {
 
     #[test]
     fn into_openapi_security() {
-        let security_raw =
-            include_json!("../../tests/data/swagger.json", "/securityDefinitions").to_string();
-        let security_openapi_raw =
-            include_json!("../../tests/data/openapi.json", "/components/securitySchemes");
-
+        // given
+        let security_raw = include_json!("../../tests/data/petstore_swagger.json", "/securityDefinitions").to_string();
+        
+        // when
         let security: BTreeMap<String, SecurityScheme> =
             serde_json::from_str(&security_raw).unwrap();
         let openapi_security: BTreeMap<String, openapi::security::SecurityScheme> =
             security.into_iter().map(|(k, v)| (k, v.into())).collect();
+
+        // then 
+        let security_openapi_raw = include_json!(
+            "../../tests/data/petstore_openapi.json",
+            "/components/securitySchemes"
+        );
 
         assert_eq!(
             security_openapi_raw,

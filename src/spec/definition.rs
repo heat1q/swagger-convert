@@ -212,10 +212,11 @@ pub struct AllOf {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::{fs, path::PathBuf};
 
     use assert_json_diff::assert_json_eq;
     use serde_json::Value;
+    use testdir::testdir;
 
     use crate::include_json;
 
@@ -223,19 +224,31 @@ mod tests {
 
     #[test]
     fn deserialize_definition() {
+        // given
         let swagger: Value =
-            serde_json::from_str(include_str!("../../tests/data/swagger.json")).unwrap();
+            serde_json::from_str(include_str!("../../tests/data/petstore_swagger.json")).unwrap();
         let definitions = swagger.get("definitions").unwrap().to_string();
         let definitions: Definitions = serde_json::from_str(&definitions).unwrap();
 
+        // when
         let s = serde_json::to_string_pretty(&definitions).unwrap();
-        fs::write("definitions.json", s).unwrap();
+        let testdir: PathBuf = testdir!();
+        fs::write(testdir.join("definitions.json"), s).unwrap();
+
+        // then
+        let actual_definitions = serde_json::to_value(testdir.join("definitions.json")).unwrap(); 
+        let expected_definitions = include_json!("../../tests/data/definitions.json");
+        assert_json_eq!(
+            serde_json::to_value(expected_definitions).unwrap(),
+            serde_json::to_value(actual_definitions).unwrap(),
+        );
     }
 
     #[test]
     fn into_openapi_schemas() {
-        let definitions = include_json!("../../tests/data/swagger.json", "/definitions").to_string();
-        let schemas = include_json!("../../tests/data/openapi.json", "/components/schemas");
+        let definitions =
+            include_json!("../../tests/data/petstore_swagger.json", "/definitions").to_string();
+        let schemas = include_json!("../../tests/data/petstore_openapi.json", "/components/schemas");
 
         let definitions: Definitions = serde_json::from_str(&definitions).unwrap();
         let openapi_schemas: BTreeMap<String, openapi::RefOr<openapi::Schema>> = definitions.into();
