@@ -55,4 +55,3 @@ fn deserialize_to_file_should_succeed() {
 
     assert_json_eq!(json, openapi_json);
 }
-

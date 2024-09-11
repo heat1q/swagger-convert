@@ -5,7 +5,7 @@ use std::{
     collections::{BTreeMap, HashMap},
     ops::Deref,
 };
-use utoipa::openapi::{self, OpenApiBuilder};
+use utoipa::openapi::{self, schema::SchemaType, OpenApiBuilder, Type};
 
 mod definition;
 mod path;
@@ -214,5 +214,13 @@ impl From<Swagger> for openapi::OpenApi {
             .security(swagger.security)
             .external_docs(swagger.external_docs)
             .build()
+    }
+}
+
+pub(crate) fn nullable_or_type(is_nullable: bool, schema_type: Type) -> SchemaType {
+    if is_nullable {
+        SchemaType::Array(vec![schema_type, Type::Null])
+    } else {
+        SchemaType::Type(schema_type)
     }
 }

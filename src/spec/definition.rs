@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use utoipa::openapi::{self};
 
-use super::{AdditionalProperties, Extensions, RefOr};
+use super::{nullable_or_type, AdditionalProperties, Extensions, RefOr};
 
 /// https://swagger.io/specification/v2/#definitions-object
 #[skip_serializing_none]
@@ -41,16 +41,19 @@ impl From<Schema> for openapi::Schema {
         match value {
             Schema::Array(array) => {
                 let openapi_array = openapi::ArrayBuilder::new()
+                    .schema_type(nullable_or_type(
+                        array.extensions.nullable(),
+                        array.schema_type,
+                    ))
                     .title(array.title)
                     .items(array.items.into_openapi_ref())
                     .description(array.description)
                     .default(array.default)
-                    .example(array.example)
+                    .examples(array.example)
                     .xml(array.xml)
                     .max_items(array.max_items)
                     .min_items(array.min_items)
                     .unique_items(array.unique_items)
-                    .nullable(array.extensions.nullable())
                     .extensions(array.extensions.into_openapi_extensions())
                     .build();
 
@@ -58,16 +61,18 @@ impl From<Schema> for openapi::Schema {
             }
             Schema::Object(object) => {
                 let mut openapi_object = openapi::ObjectBuilder::new()
-                    .schema_type(object.schema_type)
+                    .schema_type(nullable_or_type(
+                        object.extensions.nullable(),
+                        object.schema_type,
+                    ))
                     .title(object.title)
                     .format(object.format)
                     .description(object.description)
                     .default(object.default)
                     .enum_values(object.enum_values)
-                    .example(object.example)
+                    .examples(object.example)
                     .read_only(object.read_only)
                     .xml(object.xml)
-                    .nullable(object.extensions.nullable())
                     .multiple_of(object.multiple_of)
                     .maximum(object.maximum)
                     .minimum(object.minimum)
@@ -95,12 +100,15 @@ impl From<Schema> for openapi::Schema {
             }
             Schema::AllOf(all_of) => {
                 let mut openapi_all_of = openapi::AllOfBuilder::new()
+                    .schema_type(nullable_or_type(
+                        all_of.extensions.nullable(),
+                        all_of.schema_type,
+                    ))
                     .title(all_of.title)
                     .description(all_of.description)
                     .default(all_of.default)
-                    .example(all_of.example)
+                    .examples(all_of.example)
                     .discriminator(all_of.discriminator.map(openapi::Discriminator::new))
-                    .nullable(all_of.extensions.nullable())
                     .extensions(all_of.extensions.into_openapi_extensions())
                     .build();
 
@@ -122,7 +130,7 @@ impl From<Schema> for openapi::Schema {
 #[serde(rename_all = "camelCase")]
 pub struct Array {
     #[serde(rename = "type")]
-    pub schema_type: openapi::SchemaType,
+    pub schema_type: openapi::Type,
     pub title: Option<String>,
     pub items: Box<RefOr<Schema>>,
     pub description: Option<String>,
@@ -172,7 +180,7 @@ pub struct Object {
     #[serde(rename = "enum")]
     pub enum_values: Option<Vec<serde_json::Value>>,
     #[serde(rename = "type")]
-    pub schema_type: openapi::SchemaType,
+    pub schema_type: openapi::Type,
 
     #[serde(skip_serializing_if = "BTreeMap::is_empty", default = "BTreeMap::new")]
     pub properties: BTreeMap<String, RefOr<Schema>>,
@@ -195,6 +203,8 @@ pub struct Object {
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[serde(rename_all = "camelCase")]
 pub struct AllOf {
+    #[serde(default, rename = "type")]
+    pub schema_type: openapi::Type,
     pub items: Vec<RefOr<Schema>>,
     pub title: Option<String>,
     pub description: Option<String>,
@@ -236,7 +246,7 @@ mod tests {
         fs::write(testdir.join("definitions.json"), s).unwrap();
 
         // then
-        let actual_definitions = serde_json::to_value(testdir.join("definitions.json")).unwrap(); 
+        let actual_definitions = serde_json::to_value(testdir.join("definitions.json")).unwrap();
         let expected_definitions = include_json!("../../tests/data/definitions.json");
         assert_json_eq!(
             serde_json::to_value(expected_definitions).unwrap(),
@@ -248,7 +258,10 @@ mod tests {
     fn into_openapi_schemas() {
         let definitions =
             include_json!("../../tests/data/petstore_swagger.json", "/definitions").to_string();
-        let schemas = include_json!("../../tests/data/petstore_openapi.json", "/components/schemas");
+        let schemas = include_json!(
+            "../../tests/data/petstore_openapi.json",
+            "/components/schemas"
+        );
 
         let definitions: Definitions = serde_json::from_str(&definitions).unwrap();
         let openapi_schemas: BTreeMap<String, openapi::RefOr<openapi::Schema>> = definitions.into();
