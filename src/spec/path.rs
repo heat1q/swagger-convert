@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use utoipa::openapi::{self};
 
-use super::{Extensions, RefOr, Responses, Schema};
+use super::{nullable_or_type, Extensions, RefOr, Responses, Schema};
 
 #[derive(Debug, thiserror::Error)]
 #[error("invalid path parameter type")]
@@ -44,8 +44,14 @@ impl From<Paths> for openapi::Paths {
 #[cfg_attr(feature = "debug", derive(Debug))]
 #[serde(rename_all = "camelCase")]
 pub struct PathItem {
-    #[serde(flatten)]
-    pub operations: BTreeMap<openapi::PathItemType, Operation>,
+    pub get: Option<Operation>,
+    pub put: Option<Operation>,
+    pub post: Option<Operation>,
+    pub delete: Option<Operation>,
+    pub options: Option<Operation>,
+    pub head: Option<Operation>,
+    pub patch: Option<Operation>,
+    pub trace: Option<Operation>,
     pub parameters: Option<Vec<Parameter>>,
 }
 
@@ -58,11 +64,14 @@ impl From<PathItem> for openapi::PathItem {
             .parameters(openapi_params)
             .build();
 
-        openapi_path_item.operations = value
-            .operations
-            .into_iter()
-            .map(|(k, v)| (k, v.into()))
-            .collect();
+        openapi_path_item.get = value.get.map(Into::into);
+        openapi_path_item.put = value.put.map(Into::into);
+        openapi_path_item.post = value.post.map(Into::into);
+        openapi_path_item.delete = value.delete.map(Into::into);
+        openapi_path_item.options = value.options.map(Into::into);
+        openapi_path_item.head = value.head.map(Into::into);
+        openapi_path_item.patch = value.patch.map(Into::into);
+        openapi_path_item.trace = value.trace.map(Into::into);
 
         openapi_path_item
     }
@@ -113,8 +122,8 @@ impl From<Operation> for openapi::path::Operation {
             for param in params {
                 match param.parameter_in {
                     ParameterIn::FormData(form_body) => {
-                        let openapi_content = openapi::content::Content::new(openapi::RefOr::T(
-                            openapi::Schema::from(form_body),
+                        let openapi_content = openapi::content::Content::new(Some(
+                            openapi::RefOr::T(openapi::Schema::from(form_body)),
                         ));
                         let openapi_req_body = openapi::request_body::RequestBodyBuilder::new()
                             .description(param.description)
@@ -126,7 +135,7 @@ impl From<Operation> for openapi::path::Operation {
                     }
                     ParameterIn::Body(body) => {
                         let openapi_content =
-                            openapi::content::Content::new(body.schema.into_openapi_ref());
+                            openapi::content::Content::new(Some(body.schema.into_openapi_ref()));
                         let openapi_req_body = openapi::request_body::RequestBodyBuilder::new()
                             .description(param.description)
                             .required(Some(is_required(param.required)))
@@ -226,7 +235,7 @@ pub enum ParameterIn {
 #[serde(rename_all = "camelCase")]
 pub struct ParameterGeneric {
     #[serde(rename = "type")]
-    pub schema_type: openapi::SchemaType,
+    pub schema_type: openapi::Type,
     pub format: Option<openapi::SchemaFormat>,
     pub items: Option<Box<ParameterGeneric>>,
     pub allow_empty_value: Option<bool>,
@@ -257,9 +266,13 @@ pub struct ParameterGeneric {
 impl From<ParameterGeneric> for openapi::Schema {
     fn from(value: ParameterGeneric) -> Self {
         match value.schema_type {
-            openapi::SchemaType::Array => {
+            openapi::Type::Array => {
                 let openapi_array = openapi::ArrayBuilder::new()
                     //.title(value.title)
+                    .schema_type(nullable_or_type(
+                        value.extensions.nullable(),
+                        value.schema_type,
+                    ))
                     .items(openapi::RefOr::T(openapi::Schema::from(
                         *value.items.unwrap(),
                     )))
@@ -270,7 +283,6 @@ impl From<ParameterGeneric> for openapi::Schema {
                     .max_items(value.max_items)
                     .min_items(value.min_items)
                     //.unique_items(value.unique_items)
-                    .nullable(value.extensions.nullable())
                     //.extensions(value.extensions.into_openapi_extensions())
                     .build();
 
@@ -278,7 +290,10 @@ impl From<ParameterGeneric> for openapi::Schema {
             }
             _ => {
                 let openapi_object = openapi::ObjectBuilder::new()
-                    .schema_type(value.schema_type)
+                    .schema_type(nullable_or_type(
+                        value.extensions.nullable(),
+                        value.schema_type,
+                    ))
                     //.title(value.title)
                     .format(value.format)
                     //.description(value.description)
@@ -287,7 +302,6 @@ impl From<ParameterGeneric> for openapi::Schema {
                     //.example(value.example)
                     //.read_only(value.read_only)
                     //.xml(value.xml)
-                    .nullable(value.extensions.nullable())
                     .multiple_of(value.multiple_of)
                     .maximum(value.maximum)
                     .minimum(value.minimum)
@@ -317,28 +331,34 @@ pub struct ParameterBody {
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
+    use std::{fs, path::PathBuf};
 
     use assert_json_diff::assert_json_eq;
     use serde_json::json;
 
     use crate::include_json;
+    use testdir::testdir;
 
     use super::*;
 
     #[test]
     fn deserialize_paths() {
-        let paths = include_json!("../../tests/user-service-swagger.json", "/paths").to_string();
+        let paths = include_json!("../../tests/data/swagger.json", "/paths").to_string();
         let paths: Paths = serde_json::from_str(&paths).unwrap();
 
         let s = serde_json::to_string_pretty(&paths).unwrap();
-        fs::write("paths.json", s).unwrap();
+        let dir: PathBuf = testdir!();
+        fs::write(dir.join("paths.json"), s).unwrap();
+
+        // then
+        let path_raw = include_json!("../../tests/data/paths.json");
+        assert_json_eq!(serde_json::to_value(path_raw).unwrap(), paths);
     }
 
     #[test]
     fn into_openapi_paths() {
-        let paths = include_json!("../../tests/swagger.json", "/paths").to_string();
-        let openapi_paths_raw = include_json!("../../tests/openapi.json", "/paths");
+        let paths = include_json!("../../tests/data/swagger.json", "/paths").to_string();
+        let openapi_paths_raw = include_json!("../../tests/data/openapi.json", "/paths");
 
         let paths: Paths = serde_json::from_str(&paths).unwrap();
         let openapi_paths: openapi::Paths = paths.into();
