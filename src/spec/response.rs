@@ -49,7 +49,7 @@ impl From<Response> for openapi::Response {
     fn from(value: Response) -> Self {
         let mut content = openapi::Content::default();
         if let Some(schema) = value.schema {
-            content.schema = schema.into_openapi_ref();
+            content.schema = Some(schema.into_openapi_ref());
         }
 
         if let Some(examples) = value.examples {
@@ -112,7 +112,8 @@ mod tests {
 
     #[test]
     fn deserialize_responses() {
-        let responses = include_json!("../../tests/data/petstore_swagger.json", "/responses").to_string();
+        let responses =
+            include_json!("../../tests/data/petstore_swagger.json", "/responses").to_string();
         let _responses: Responses = serde_json::from_str(&responses).unwrap();
     }
 
@@ -120,8 +121,10 @@ mod tests {
     fn into_openapi_responses() {
         let responses_raw =
             include_json!("../../tests/data/petstore_swagger.json", "/responses").to_string();
-        let responses_openapi_raw =
-            include_json!("../../tests/data/petstore_openapi.json", "/components/responses");
+        let responses_openapi_raw = include_json!(
+            "../../tests/data/petstore_openapi.json",
+            "/components/responses"
+        );
 
         let responses: Responses = serde_json::from_str(&responses_raw).unwrap();
         let openapi_responses: openapi::Responses = responses.into();

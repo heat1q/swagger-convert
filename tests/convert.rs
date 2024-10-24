@@ -38,7 +38,6 @@ fn deserialize_to_file_should_succeed() {
 
     // then
     let openapi_json = serde_json::to_value(&openapi).unwrap();
-    println!("sting: {}", openapi_json);
     let out_file = File::options()
         .create(true)
         .truncate(true)

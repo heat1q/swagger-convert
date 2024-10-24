@@ -17,14 +17,10 @@
         "description": "Optional extended description in Markdown.",
         "responses": {
           "200": {
-            "description": "OK",
             "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
+              "application/json": {}
+            },
+            "description": "OK"
           }
         }
       }
@@ -32,4 +28,3 @@
   },
   "components": {}
 }
-

@@ -13,7 +13,7 @@ serde = "1.0.204"
 serde_json = { version = "1.0.120", features = ["raw_value"]}
 serde_with = "3.9.0"
 thiserror = "1.0.63"
-utoipa = { git = "https://github.com/heat1q/utoipa", rev = "15f4ec0a5129f96e28a984b7f27c2a9c2a82c433", features = ["debug"]}
+utoipa = "5.1.2"
 
 clap = { version = "4.5.10", optional = true }
 anyhow = { version = "1.0.86", optional = true }

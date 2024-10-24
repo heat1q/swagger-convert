@@ -122,8 +122,8 @@ impl From<Operation> for openapi::path::Operation {
             for param in params {
                 match param.parameter_in {
                     ParameterIn::FormData(form_body) => {
-                        let openapi_content = openapi::content::Content::new(openapi::RefOr::T(
-                            openapi::Schema::from(form_body),
+                        let openapi_content = openapi::content::Content::new(Some(
+                            openapi::RefOr::T(openapi::Schema::from(form_body)),
                         ));
                         let openapi_req_body = openapi::request_body::RequestBodyBuilder::new()
                             .description(param.description)
@@ -135,7 +135,7 @@ impl From<Operation> for openapi::path::Operation {
                     }
                     ParameterIn::Body(body) => {
                         let openapi_content =
-                            openapi::content::Content::new(body.schema.into_openapi_ref());
+                            openapi::content::Content::new(Some(body.schema.into_openapi_ref()));
                         let openapi_req_body = openapi::request_body::RequestBodyBuilder::new()
                             .description(param.description)
                             .required(Some(is_required(param.required)))
